@@ -6,6 +6,9 @@ import (
 	"net/http"
 
 	"projectsphere/eniqlo-store/config"
+	productHandler "projectsphere/eniqlo-store/internal/product/handler"
+	productRepository "projectsphere/eniqlo-store/internal/product/repository"
+	productService "projectsphere/eniqlo-store/internal/product/service"
 	"projectsphere/eniqlo-store/pkg/database"
 
 	"github.com/gin-gonic/gin"
@@ -53,13 +56,24 @@ func (p *HttpImpl) Shutdown(ctx context.Context) error {
 }
 
 func Start() *HttpImpl {
-
-	// db connection
 	db, err := database.NewDatabase()
-	if err != nil {
-		log.Fatal()
-	}
-	defer db.Close()
 
-	return nil
+	if err != nil {
+		// without db we can't do anything so should be aware if we can't connect
+		panic(err.Error())
+	}
+
+	postgresConnector := database.NewPostgresConnector(context.TODO(), db)
+
+	productRepo := productRepository.NewProductRepo(postgresConnector)
+	productSvc := productService.NewProductService(productRepo)
+	productHandler := productHandler.NewProductHandler(productSvc)
+
+	httpHandlerImpl := NewHttpHandler(
+		productHandler,
+	)
+	httpRouterImpl := NewHttpRoute(httpHandlerImpl)
+	httpImpl := NewHttpProtocol(httpRouterImpl)
+
+	return httpImpl
 }
