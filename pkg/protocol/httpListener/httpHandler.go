@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"projectsphere/eniqlo-store/config"
 	productHandler "projectsphere/eniqlo-store/internal/product/handler"
-
+	userHandler "projectsphere/eniqlo-store/internal/staff/handler"
 	"projectsphere/eniqlo-store/pkg/middleware/logger"
 	"projectsphere/eniqlo-store/pkg/protocol/msg"
 
@@ -13,14 +13,17 @@ import (
 
 type HttpHandlerImpl struct {
 	productHandler productHandler.ProductHandler
+	userHandler    userHandler.UserHandler
 }
 
 func NewHttpHandler(
 	productHandler productHandler.ProductHandler,
+	userHandler userHandler.UserHandler,
 
 ) *HttpHandlerImpl {
 	return &HttpHandlerImpl{
 		productHandler: productHandler,
+		userHandler:    userHandler,
 	}
 }
 func CORSMiddleware() gin.HandlerFunc {
@@ -49,6 +52,9 @@ func (h *HttpHandlerImpl) Router() *gin.Engine {
 	server.Static("/v1/docs", "./dist")
 
 	r := server.Group(config.GetString("APPLICATION_GROUP"))
+
+	staff := r.Group("/staff")
+	staff.POST("/register", h.userHandler.Register)
 
 	product := r.Group("/product")
 	product.POST("/", h.productHandler.Create)
