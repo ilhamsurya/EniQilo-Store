@@ -12,6 +12,7 @@ import (
 	"projectsphere/eniqlo-store/pkg/database"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -56,13 +57,11 @@ func (p *HttpImpl) Shutdown(ctx context.Context) error {
 }
 
 func Start() *HttpImpl {
-	db, err := database.NewDatabase()
 
+	db, err := sqlx.Connect("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%v/%s?%s", config.GetString("DB_USERNAME"), config.GetString("DB_PASSWORD"), config.GetString("DB_HOST"), config.GetString("DB_PORT"), config.GetString("DB_NAME"), config.GetString("DB_PARAMS")))
 	if err != nil {
-		// without db we can't do anything so should be aware if we can't connect
 		panic(err.Error())
 	}
-
 	postgresConnector := database.NewPostgresConnector(context.TODO(), db)
 
 	productRepo := productRepository.NewProductRepo(postgresConnector)

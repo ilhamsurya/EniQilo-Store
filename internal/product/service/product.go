@@ -20,6 +20,31 @@ func NewProductService(productRepo repository.ProductRepo) ProductService {
 	}
 }
 
+func (s ProductService) Update(ctx context.Context, product entity.Product) error {
+	if err := s.validateProduct(product); err != nil {
+		return &msg.RespError{
+			Code:    http.StatusBadRequest,
+			Message: "request doesn't pass validation",
+		}
+	}
+
+	err := s.productRepo.UpdateProduct(product)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s ProductService) Delete(ctx context.Context, productID string, userID uint32) error {
+	err := s.productRepo.DeleteProduct(productID, userID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s ProductService) Create(ctx context.Context, productParam entity.Product, userId uint32) (entity.ProductResponse, error) {
 	if err := s.validateProduct(productParam); err != nil {
 		return entity.ProductResponse{}, &msg.RespError{

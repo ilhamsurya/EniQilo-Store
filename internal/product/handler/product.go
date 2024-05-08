@@ -58,6 +58,68 @@ func (h ProductHandler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, resp)
 }
 
+// Update updates a product.
+func (h ProductHandler) Update(c *gin.Context) {
+	if c.GetHeader("Authorization") == "" {
+		c.JSON(http.StatusUnauthorized, msg.Unauthorization("No authorization header provided"))
+		return
+	}
+
+	if c.Request.Body == nil {
+		c.JSON(http.StatusBadRequest, msg.BadRequest("Request body is empty"))
+		return
+	}
+
+	payload := new(entity.Product)
+	err := c.ShouldBindJSON(payload)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, msg.BadRequest(err.Error()))
+		return
+	}
+
+	if containsNull(payload) {
+		c.JSON(http.StatusBadRequest, msg.BadRequest("JSON payload contains null values"))
+		return
+	}
+
+	err = h.productSvc.Update(c.Request.Context(), *payload)
+	if err != nil {
+		respError := msg.UnwrapRespError(err)
+		c.JSON(respError.Code, respError)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product updated successfully"})
+}
+
+// Delete deletes a product.
+func (h ProductHandler) Delete(c *gin.Context) {
+	if c.GetHeader("Authorization") == "" {
+		c.JSON(http.StatusUnauthorized, msg.Unauthorization("No authorization header provided"))
+		return
+	}
+
+	productID := c.Param("id")
+	if productID == "" {
+		c.JSON(http.StatusBadRequest, msg.BadRequest("Product ID is missing"))
+		return
+	}
+
+	userID, err := auth.GetUserIdInsideCtx(c)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	err = h.productSvc.Delete(c.Request.Context(), productID, userID)
+	if err != nil {
+		respError := msg.UnwrapRespError(err)
+		c.JSON(respError.Code, respError)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Product deleted successfully"})
+}
+
 func containsNull(param *entity.Product) bool {
 	if param == nil {
 		return false

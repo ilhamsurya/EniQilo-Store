@@ -52,6 +52,8 @@ func (h *HttpHandlerImpl) Router() *gin.Engine {
 
 	product := r.Group("/product")
 	product.POST("/", h.productHandler.Create)
+	product.PUT("/:id", h.productHandler.Update)
+	product.DELETE("/:id", h.productHandler.Delete)
 
 	return server
 }
