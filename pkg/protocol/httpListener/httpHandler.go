@@ -2,8 +2,9 @@ package httpListener
 
 import (
 	"net/http"
+	"projectsphere/eniqlo-store/config"
+	productHandler "projectsphere/eniqlo-store/internal/product/handler"
 
-	"projectsphere/eniqlo-store/pkg/middleware/auth"
 	"projectsphere/eniqlo-store/pkg/middleware/logger"
 	"projectsphere/eniqlo-store/pkg/protocol/msg"
 
@@ -11,15 +12,15 @@ import (
 )
 
 type HttpHandlerImpl struct {
-	jwtAuth auth.JWTAuth
+	productHandler productHandler.ProductHandler
 }
 
 func NewHttpHandler(
+	productHandler productHandler.ProductHandler,
 
-	jwtAuth auth.JWTAuth,
 ) *HttpHandlerImpl {
 	return &HttpHandlerImpl{
-		jwtAuth: jwtAuth,
+		productHandler: productHandler,
 	}
 }
 func CORSMiddleware() gin.HandlerFunc {
@@ -46,6 +47,13 @@ func (h *HttpHandlerImpl) Router() *gin.Engine {
 	})
 
 	server.Static("/v1/docs", "./dist")
+
+	r := server.Group(config.GetString("APPLICATION_GROUP"))
+
+	product := r.Group("/product")
+	product.POST("/", h.productHandler.Create)
+	product.PUT("/:id", h.productHandler.Update)
+	product.DELETE("/:id", h.productHandler.Delete)
 
 	return server
 }

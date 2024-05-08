@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"projectsphere/eniqlo-store/config"
 	"projectsphere/eniqlo-store/pkg/middleware/graceful"
 	"projectsphere/eniqlo-store/pkg/middleware/logger"
 	"projectsphere/eniqlo-store/pkg/protocol/httpListener"
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	logger.InitLogger()
+	config.LoadConfig(".env")
 
 	httpProtocol := httpListener.Start()
 	graceful.GracefulShutdown(

@@ -6,9 +6,13 @@ import (
 	"net/http"
 
 	"projectsphere/eniqlo-store/config"
+	productHandler "projectsphere/eniqlo-store/internal/product/handler"
+	productRepository "projectsphere/eniqlo-store/internal/product/repository"
+	productService "projectsphere/eniqlo-store/internal/product/service"
 	"projectsphere/eniqlo-store/pkg/database"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoiron/sqlx"
 	"github.com/rs/zerolog/log"
 )
 
@@ -54,12 +58,21 @@ func (p *HttpImpl) Shutdown(ctx context.Context) error {
 
 func Start() *HttpImpl {
 
-	// db connection
-	db, err := database.NewDatabase()
+	db, err := sqlx.Connect("postgres", fmt.Sprintf("postgresql://%s:%s@%s:%v/%s?%s", config.GetString("DB_USERNAME"), config.GetString("DB_PASSWORD"), config.GetString("DB_HOST"), config.GetString("DB_PORT"), config.GetString("DB_NAME"), config.GetString("DB_PARAMS")))
 	if err != nil {
-		log.Fatal()
+		panic(err.Error())
 	}
-	defer db.Close()
+	postgresConnector := database.NewPostgresConnector(context.TODO(), db)
 
-	return nil
+	productRepo := productRepository.NewProductRepo(postgresConnector)
+	productSvc := productService.NewProductService(productRepo)
+	productHandler := productHandler.NewProductHandler(productSvc)
+
+	httpHandlerImpl := NewHttpHandler(
+		productHandler,
+	)
+	httpRouterImpl := NewHttpRoute(httpHandlerImpl)
+	httpImpl := NewHttpProtocol(httpRouterImpl)
+
+	return httpImpl
 }
