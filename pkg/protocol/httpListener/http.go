@@ -4,12 +4,17 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"projectsphere/eniqlo-store/config"
 	productHandler "projectsphere/eniqlo-store/internal/product/handler"
 	productRepository "projectsphere/eniqlo-store/internal/product/repository"
 	productService "projectsphere/eniqlo-store/internal/product/service"
+	userHandler "projectsphere/eniqlo-store/internal/staff/handler"
+	userRepository "projectsphere/eniqlo-store/internal/staff/repository"
+	userService "projectsphere/eniqlo-store/internal/staff/service"
 	"projectsphere/eniqlo-store/pkg/database"
+	"projectsphere/eniqlo-store/pkg/middleware/auth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jmoiron/sqlx"
@@ -64,12 +69,33 @@ func Start() *HttpImpl {
 	}
 	postgresConnector := database.NewPostgresConnector(context.TODO(), db)
 
+	accessTokenExpiredTime := 480
+	jwtSecretKey := config.GetString("JWT_SECRET")
+	strSaltLen := config.GetString("BCRYPT_SALT")
+
+	saltLen, err := strconv.Atoi(strSaltLen)
+	if err != nil {
+		panic("cannot parse BCRYPT_SALT")
+	}
+
+	userRepo := userRepository.NewUserRepo(postgresConnector)
+
+	jwtAuth := auth.NewJwtAuth(
+		accessTokenExpiredTime,
+		jwtSecretKey,
+		userRepo.IsUserExist,
+	)
+
+	userSvc := userService.NewUserService(userRepo, saltLen, jwtAuth)
+	userHandler := userHandler.NewUserHandler(userSvc)
+
 	productRepo := productRepository.NewProductRepo(postgresConnector)
 	productSvc := productService.NewProductService(productRepo)
 	productHandler := productHandler.NewProductHandler(productSvc)
 
 	httpHandlerImpl := NewHttpHandler(
 		productHandler,
+		userHandler,
 	)
 	httpRouterImpl := NewHttpRoute(httpHandlerImpl)
 	httpImpl := NewHttpProtocol(httpRouterImpl)
