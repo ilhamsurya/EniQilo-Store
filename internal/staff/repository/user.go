@@ -21,9 +21,8 @@ func NewUserRepo(dbConnector database.PostgresConnector) UserRepo {
 func (r UserRepo) CreateUser(ctx context.Context, param entity.UserParam) (entity.User, error) {
 	query := `
 		INSERT INTO users (email, name, phone_number, password, salt) VALUES 
-		($1, $2, $3, $4) RETURNING user_id, email, name, phone_number, password, salt, created_at, updated_at
+		($1, $2, $3, $4, $5) RETURNING user_id, email, name, phone_number, password, salt, created_at, updated_at
 	`
-
 	var row entity.User
 	err := r.dbConnector.DB.GetContext(
 		ctx,
@@ -51,13 +50,13 @@ func (r UserRepo) CreateUser(ctx context.Context, param entity.UserParam) (entit
 
 func (r UserRepo) IsUserExist(ctx context.Context, userId uint32) bool {
 	query := `
-		SELECT id_user, email, name, password, salt, created_at, updated_at FROM users WHERE id_user = $1
+		SELECT 1 FROM users WHERE id_user = $1
 	`
 
-	var row entity.User
+	var result = 0
 	err := r.dbConnector.DB.GetContext(
 		ctx,
-		&row,
+		&result,
 		query,
 		userId,
 	)
@@ -65,5 +64,25 @@ func (r UserRepo) IsUserExist(ctx context.Context, userId uint32) bool {
 		return false
 	}
 
-	return true
+	return result == 1
+}
+
+func (r UserRepo) IsPhoneNumberExist(ctx context.Context, phoneNumber string) bool {
+	query := `
+		SELECT 1 FROM users WHERE phone_number = $1
+	`
+
+	var result = 0
+	err := r.dbConnector.DB.GetContext(
+		ctx,
+		&result,
+		query,
+		phoneNumber,
+	)
+
+	if err != nil {
+		return false
+	}
+
+	return result == 1
 }

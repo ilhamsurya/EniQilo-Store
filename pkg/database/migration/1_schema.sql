@@ -1,10 +1,12 @@
-CREATE TABLE "user" (
-  "id_user" SERIAL PRIMARY KEY,
-  "name" varchar,
-  "password" varchar,
-  "phone_number" varchar,
-  "created_at" timestamp,
-  "updated_at" timestamp
+CREATE TABLE "users" (
+  "user_id" SERIAL PRIMARY KEY,
+  "email" varchar unique not null,
+  "name" varchar not null,
+  "phone_number" varchar unique not null,
+  "password" varchar not null,
+  "salt" varchar not null,
+  "created_at" timestamp DEFAULT CURRENT_TIMESTAMP,
+  "updated_at" timestamp DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE "products" (

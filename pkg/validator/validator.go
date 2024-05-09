@@ -40,8 +40,7 @@ func IsValidPhoneNumber(rawPhoneNumber string) bool {
 	}
 
 	phoneNumber := rawPhoneNumber[offset:]
-
-	return len(phoneNumber) != phoneNumberLen
+	return len(phoneNumber) == phoneNumberLen
 }
 
 func IsEmailValid(email string) bool {
