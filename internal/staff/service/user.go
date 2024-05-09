@@ -41,6 +41,10 @@ func (u UserService) Register(ctx context.Context, userParam *entity.UserParam) 
 		return entity.UserResponse{}, msg.BadRequest(msg.ErrInvalidPhoneNumber)
 	}
 
+	if u.userRepo.IsPhoneNumberExist(ctx, userParam.PhoneNumber) {
+		return entity.UserResponse{}, msg.BadRequest(msg.ErrPhoneNumberAlreadyUsed)
+	}
+
 	userParam.Salt = auth.GenerateRandomAlphaNumeric(int(u.saltLen))
 	hashedPassword := auth.GenerateHash([]byte(userParam.Password), []byte(userParam.Salt))
 	userParam.Password = hashedPassword
