@@ -24,6 +24,11 @@ type UserParam struct {
 	Salt        string
 }
 
+type UserLoginParam struct {
+	PhoneNumber string `json:"phoneNumber"`
+	Password    string `json:"password"`
+}
+
 type UserResponse struct {
 	UserId      string `json:"userId"`
 	Name        string `json:"name"`

@@ -96,6 +96,7 @@ func Start() *HttpImpl {
 	httpHandlerImpl := NewHttpHandler(
 		productHandler,
 		userHandler,
+		jwtAuth,
 	)
 	httpRouterImpl := NewHttpRoute(httpHandlerImpl)
 	httpImpl := NewHttpProtocol(httpRouterImpl)

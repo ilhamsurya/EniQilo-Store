@@ -5,6 +5,7 @@ import (
 	"projectsphere/eniqlo-store/config"
 	productHandler "projectsphere/eniqlo-store/internal/product/handler"
 	userHandler "projectsphere/eniqlo-store/internal/staff/handler"
+	"projectsphere/eniqlo-store/pkg/middleware/auth"
 	"projectsphere/eniqlo-store/pkg/middleware/logger"
 	"projectsphere/eniqlo-store/pkg/protocol/msg"
 
@@ -14,16 +15,19 @@ import (
 type HttpHandlerImpl struct {
 	productHandler productHandler.ProductHandler
 	userHandler    userHandler.UserHandler
+	jwtAuth        auth.JWTAuth
 }
 
 func NewHttpHandler(
 	productHandler productHandler.ProductHandler,
 	userHandler userHandler.UserHandler,
+	jwtAuth auth.JWTAuth,
 
 ) *HttpHandlerImpl {
 	return &HttpHandlerImpl{
 		productHandler: productHandler,
 		userHandler:    userHandler,
+		jwtAuth:        jwtAuth,
 	}
 }
 func CORSMiddleware() gin.HandlerFunc {
@@ -55,8 +59,10 @@ func (h *HttpHandlerImpl) Router() *gin.Engine {
 
 	staff := r.Group("/staff")
 	staff.POST("/register", h.userHandler.Register)
+	staff.POST("/login", h.userHandler.Login)
 
 	product := r.Group("/product")
+	product.Use(h.jwtAuth.JwtAuthUserMiddleware())
 	product.POST("/", h.productHandler.Create)
 	product.PUT("/:id", h.productHandler.Update)
 	product.DELETE("/:id", h.productHandler.Delete)

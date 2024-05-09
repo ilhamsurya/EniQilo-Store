@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 	"projectsphere/eniqlo-store/internal/staff/entity"
 	"projectsphere/eniqlo-store/pkg/database"
 	"projectsphere/eniqlo-store/pkg/protocol/msg"
@@ -40,6 +41,29 @@ func (r UserRepo) CreateUser(ctx context.Context, param entity.UserParam) (entit
 				Code:    409,
 				Message: msg.ErrEmailAlreadyExist,
 			}
+		} else {
+			return entity.User{}, msg.InternalServerError(err.Error())
+		}
+	}
+
+	return row, nil
+}
+
+func (r UserRepo) GetUserByPhoneNumber(ctx context.Context, phoneNumber string) (entity.User, error) {
+	query := `
+		SELECT user_id, email, name, phone_number, password, salt, created_at, updated_at FROM users WHERE phone_number = $1
+	`
+
+	var row entity.User
+	err := r.dbConnector.DB.GetContext(
+		ctx,
+		&row,
+		query,
+		phoneNumber,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return entity.User{}, msg.NotFound(msg.ErrUserNotFound)
 		} else {
 			return entity.User{}, msg.InternalServerError(err.Error())
 		}
