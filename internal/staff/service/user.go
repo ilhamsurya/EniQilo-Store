@@ -67,3 +67,36 @@ func (u UserService) Register(ctx context.Context, userParam *entity.UserParam) 
 		AccessToken: accessToken,
 	}, nil
 }
+
+func (u UserService) Login(ctx context.Context, loginParam *entity.UserLoginParam) (entity.UserResponse, error) {
+	if !validator.IsValidPhoneNumber(loginParam.PhoneNumber) {
+		return entity.UserResponse{}, msg.BadRequest(msg.ErrInvalidPhoneNumber)
+	}
+
+	if !validator.IsSolidPassword(loginParam.Password) {
+		return entity.UserResponse{}, msg.BadRequest(msg.ErrWrongPassword)
+	}
+
+	user, err := u.userRepo.GetUserByPhoneNumber(ctx, loginParam.PhoneNumber)
+	if err != nil {
+		return entity.UserResponse{}, err
+	}
+
+	err = auth.CompareHash(user.Password, loginParam.Password, user.Salt)
+	if err != nil {
+		return entity.UserResponse{}, msg.BadRequest(msg.ErrWrongPassword)
+	}
+
+	accessToken, err := u.jwtAuth.GenerateToken(user.UserId)
+	if err != nil {
+		return entity.UserResponse{}, err
+	}
+
+	return entity.UserResponse{
+		UserId:      fmt.Sprint(user.UserId),
+		Name:        user.Name,
+		Email:       user.Email,
+		PhoneNumber: user.PhoneNumber,
+		AccessToken: accessToken,
+	}, nil
+}
