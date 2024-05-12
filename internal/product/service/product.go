@@ -142,3 +142,34 @@ func (s ProductService) validateProduct(product entity.Product) error {
 
 	return nil
 }
+
+func (s ProductService) Get(ctx context.Context, getProductParam entity.GetProductParam) ([]entity.GetProductData, error) {
+	orderby := []string{"asc", "desc"}
+	isValidPricePrm := false
+	isValidCreatePrm := false
+
+	for _, v := range orderby {
+		if getProductParam.Price == v {
+			isValidPricePrm = true
+		}
+
+		if getProductParam.CreatedAt == v {
+			isValidCreatePrm = true
+		}
+	}
+
+	if !isValidCreatePrm {
+		getProductParam.CreatedAt = ""
+	}
+
+	if !isValidPricePrm {
+		getProductParam.Price = ""
+	}
+
+	res, err := s.productRepo.GetProduct(ctx, getProductParam)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}

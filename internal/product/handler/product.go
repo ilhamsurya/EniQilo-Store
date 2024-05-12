@@ -7,6 +7,7 @@ import (
 	svc "projectsphere/eniqlo-store/internal/product/service"
 	"projectsphere/eniqlo-store/pkg/middleware/auth"
 	"projectsphere/eniqlo-store/pkg/protocol/msg"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -131,4 +132,104 @@ func containsNull(param *entity.Product) bool {
 		return true
 	}
 	return false
+}
+
+func (h ProductHandler) Get(c *gin.Context) {
+	id := c.Query("id")
+	limit := c.DefaultQuery("limit", "5")
+	offset := c.DefaultQuery("offset", "0")
+	isAvailable := c.Query("isAvailable")
+	name := c.Query("name")
+	category := c.Query("category")
+	sku := c.Query("sku")
+	price := c.Query("price")
+	inStock := c.Query("inStock")
+	createdAt := c.Query("createdAt")
+
+	param := entity.GetProductParam{
+		Name:      name,
+		Category:  category,
+		Sku:       sku,
+		Price:     price,
+		CreatedAt: createdAt,
+	}
+
+	idParam, err := strconv.Atoi(id)
+	if err == nil {
+		param.Id = &idParam
+	}
+
+	limitParam, err := strconv.Atoi(limit)
+	if err == nil {
+		param.Limit = &limitParam
+	}
+
+	offsetParam, err := strconv.Atoi(offset)
+	if err == nil {
+		param.Offset = &offsetParam
+	}
+
+	isAvailableParam, err := strconv.ParseBool(isAvailable)
+	if err == nil {
+		param.IsAvailable = &isAvailableParam
+	}
+
+	inStockParam, err := strconv.ParseBool(inStock)
+	if err == nil {
+		param.InStock = &inStockParam
+	}
+
+	res, err := h.productSvc.Get(c.Request.Context(), param)
+	if err != nil {
+		respError := msg.UnwrapRespError(err)
+		c.JSON(respError.Code, respError)
+		return
+	}
+
+	c.JSON(http.StatusOK, msg.ReturnResult("success", res))
+}
+
+func (h ProductHandler) Search(c *gin.Context) {
+	limit := c.DefaultQuery("limit", "5")
+	offset := c.DefaultQuery("offset", "0")
+	isAvailable := true
+	name := c.Query("name")
+	category := c.Query("category")
+	sku := c.Query("sku")
+	price := c.Query("price")
+	inStock := c.Query("inStock")
+
+	param := entity.GetProductParam{
+		Id:          nil,
+		Name:        name,
+		Category:    category,
+		Sku:         sku,
+		Price:       price,
+		CreatedAt:   "",
+		IsAvailable: &isAvailable,
+	}
+
+	limitParam, err := strconv.Atoi(limit)
+	if err == nil {
+		param.Limit = &limitParam
+	}
+
+	offsetParam, err := strconv.Atoi(offset)
+	if err == nil {
+		param.Offset = &offsetParam
+	}
+
+	inStockParam, err := strconv.ParseBool(inStock)
+	if err == nil {
+		param.InStock = &inStockParam
+	}
+
+	res, err := h.productSvc.Get(c.Request.Context(), param)
+	if err != nil {
+		respError := msg.UnwrapRespError(err)
+		c.JSON(respError.Code, respError)
+		return
+	}
+
+	c.JSON(http.StatusOK, msg.ReturnResult("success", res))
 }

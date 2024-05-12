@@ -25,3 +25,30 @@ type ProductResponse struct {
 	Message string  `json:"message"`
 	Data    Product `json:"data"`
 }
+
+type GetProductParam struct {
+	Id          *int   `json:"id"`
+	Limit       *int   `json:"limit"`
+	Offset      *int   `json:"offset"`
+	Name        string `json:"name"`
+	IsAvailable *bool  `json:"isAvailable"`
+	Category    string `json:"category"`
+	Sku         string `json:"sku"`
+	Price       string `json:"price"`
+	InStock     *bool  `json:"inStock"`
+	CreatedAt   string `json:"createdAt"`
+}
+
+type GetProductData struct {
+	ID          string    `json:"id"`
+	Name        string    `json:"name"`
+	SKU         string    `json:"sku"`
+	Category    string    `json:"category"`
+	ImageURL    string    `json:"imageUrl"`
+	Stock       int       `json:"stock"`
+	Notes       string    `json:"notes"`
+	Price       float64   `json:"price"`
+	Location    string    `json:"location"`
+	IsAvailable bool      `json:"isAvailable"`
+	CreatedAt   time.Time `json:"createdAt"`
+}

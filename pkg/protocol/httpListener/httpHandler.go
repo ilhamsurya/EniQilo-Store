@@ -54,6 +54,8 @@ func (h *HttpHandlerImpl) Router() *gin.Engine {
 	product.POST("/", h.productHandler.Create)
 	product.PUT("/:id", h.productHandler.Update)
 	product.DELETE("/:id", h.productHandler.Delete)
+	product.GET("/", h.productHandler.Get)
+	product.GET("/customer", h.productHandler.Search)
 
 	return server
 }
